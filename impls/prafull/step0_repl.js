@@ -1,0 +1,17 @@
+const { stdin, stdout } = process;
+
+const READ = (arg) => arg;
+const EVAL = (arg) => arg;
+const PRINT = (arg) => arg;
+const rep = (arg) => PRINT(EVAL(READ(arg)));
+
+const main = () => {
+  stdin.setEncoding('utf8');
+  stdout.write('user> ');
+  stdin.on('data', (line) => {
+    stdout.write(rep(line));
+    stdout.write('user> ');
+  });
+};
+
+main();
