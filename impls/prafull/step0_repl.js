@@ -25,7 +25,7 @@ const rl = readline.createInterface({
 
 const repl = () =>
   rl.question('user> ', (line) => {
-    console.log(line);
+    console.log(rep(line));
     repl();
   });
 
