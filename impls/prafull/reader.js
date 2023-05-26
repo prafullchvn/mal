@@ -55,6 +55,12 @@ const read_atom = (reader) => {
   if (token.match(/^-?\d+$/)) {
     return new MalValue(parseInt(token));
   }
+  if (token === 'true') {
+    return true;
+  }
+  if (token === 'false') {
+    return false;
+  }
   return new MalSymbol(token);
 };
 
