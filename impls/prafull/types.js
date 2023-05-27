@@ -26,6 +26,10 @@ class MalList extends MalValue {
   pr_str() {
     return '(' + this.value.map((x) => x.pr_str()).join(' ') + ')';
   }
+
+  isEmpty() {
+    return this.value.length === 0;
+  }
 }
 
 class MalVector extends MalValue {
@@ -38,4 +42,14 @@ class MalVector extends MalValue {
   }
 }
 
-module.exports = { MalSymbol, MalValue, MalList, MalVector };
+class MalNil extends MalValue {
+  constructor() {
+    super(null);
+  }
+
+  pr_str() {
+    return 'nil';
+  }
+}
+
+module.exports = { MalSymbol, MalValue, MalList, MalVector, MalNil };
