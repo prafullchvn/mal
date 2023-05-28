@@ -1,6 +1,12 @@
+const { pr_str } = require('./printer.js');
 const { read_str } = require('./reader.js');
-// const { pr_str } = require('./printer.js');
-const { MalSymbol, MalList, MalValue } = require('./types.js');
+const {
+  MalSymbol,
+  MalList,
+  MalValue,
+  MalMap,
+  MalVector,
+} = require('./types.js');
 const readline = require('readline');
 
 const env = {
@@ -25,7 +31,22 @@ const eval_ast = (ast, env) => {
 
 const READ = (arg) => read_str(arg);
 
+const evalListInSeq = (ast, cb) => {
+  return ast.value.map((val) => {
+    if (val instanceof MalList) {
+      return cb(val, env);
+    }
+    return val;
+  });
+};
+
 const EVAL = (ast, env) => {
+  if (ast instanceof MalMap) {
+    return new MalMap(evalListInSeq(ast, EVAL));
+  }
+  if (ast instanceof MalVector) {
+    return new MalVector(evalListInSeq(ast, EVAL));
+  }
   if (!(ast instanceof MalList)) return eval_ast(ast, env);
   if (ast.isEmpty()) return ast;
 
@@ -33,7 +54,7 @@ const EVAL = (ast, env) => {
   return fn.apply(null, args);
 };
 
-const PRINT = (malValue) => malValue.pr_str();
+const PRINT = (malValue) => pr_str(malValue);
 const rep = (str) => PRINT(EVAL(READ(str), env));
 
 const rl = readline.createInterface({

@@ -52,4 +52,14 @@ class MalNil extends MalValue {
   }
 }
 
-module.exports = { MalSymbol, MalValue, MalList, MalVector, MalNil };
+class MalMap extends MalValue {
+  constructor(value) {
+    super(value);
+  }
+
+  pr_str() {
+    return '{' + this.value.map((x, i) => x.pr_str()).join(' ') + '}';
+  }
+}
+
+module.exports = { MalSymbol, MalValue, MalList, MalVector, MalNil, MalMap };

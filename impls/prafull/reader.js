@@ -4,6 +4,7 @@ const {
   MalList,
   MalVector,
   MalNil,
+  MalMap,
 } = require('./types.js');
 
 class Reader {
@@ -56,6 +57,16 @@ const read_vector = (reader) => {
   return new MalVector(ast);
 };
 
+const read_map = (reader) => {
+  const ast = read_seq(reader, '}');
+
+  if (ast.length % 2 !== 0) {
+    throw 'Map should contain even number of forms.';
+  }
+
+  return new MalMap(ast);
+};
+
 const read_atom = (reader) => {
   const token = reader.next();
   if (token.match(/^-?\d+$/)) {
@@ -80,6 +91,8 @@ const read_form = (reader) => {
       return read_list(reader);
     case '[':
       return read_vector(reader);
+    case '{':
+      return read_map(reader);
     default:
       return read_atom(reader);
   }
