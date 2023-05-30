@@ -8,17 +8,32 @@ const {
   MalVector,
 } = require('./types.js');
 const readline = require('readline');
+const { Env } = require('./env.js');
 
-const env = {
+const _env = {
   '+': (...args) => args.reduce((a, b) => new MalValue(a.value + b.value)),
   '-': (...args) => args.reduce((a, b) => new MalValue(a.value - b.value)),
   '/': (...args) => args.reduce((a, b) => new MalValue(a.value / b.value)),
   '*': (...args) => args.reduce((a, b) => new MalValue(a.value * b.value)),
 };
 
+const env = new Env();
+env.set(new MalSymbol('+'), (...args) =>
+  args.reduce((a, b) => new MalValue(a.value + b.value))
+);
+env.set(new MalSymbol('-'), (...args) =>
+  args.reduce((a, b) => new MalValue(a.value - b.value))
+);
+env.set(new MalSymbol('*'), (...args) =>
+  args.reduce((a, b) => new MalValue(a.value * b.value))
+);
+env.set(new MalSymbol('/'), (...args) =>
+  args.reduce((a, b) => new MalValue(a.value / b.value))
+);
+
 const eval_ast = (ast, env) => {
   if (ast instanceof MalSymbol) {
-    return env[ast.value] || ast;
+    return env.get(ast) || ast;
   }
 
   if (ast instanceof MalList) {
@@ -26,36 +41,43 @@ const eval_ast = (ast, env) => {
     return new MalList(newAst);
   }
 
+  if (ast instanceof MalMap) {
+    const newAst = ast.value.map((x) => EVAL(x, env));
+    return new MalMap(newAst);
+  }
+
   if (ast instanceof MalVector) {
     const newAst = ast.value.map((x) => EVAL(x, env));
     return new MalVector(newAst);
   }
 
-  if (ast instanceof MalMap) {
-    const newAst = ast.value.map((x) => {
-      console.log(x, EVAL(x, env));
-      return EVAL(x, env);
-    });
-    return new MalMap(newAst);
-  }
-
   return ast;
 };
 
-const READ = (arg) => read_str(arg);
-
-const evalListInSeq = (ast, cb) => {
-  return ast.value.map((val) => {
-    if (val instanceof MalList) {
-      return cb(val, env);
-    }
-    return val;
-  });
+const handle_let = (ast, env) => {
+  const letEnv = new Env(env);
+  for (let i = 0; i < ast.value[1].value.length; i += 2) {
+    letEnv.set(ast.value[1].value[i], EVAL(ast.value[1].value[i + 1], letEnv));
+  }
+  return EVAL(ast.value[2], letEnv);
 };
 
+const handle_def = (ast, env) => {
+  env.set(ast.value[1], EVAL(ast.value[2], env));
+  return env.get(ast.value[1]);
+};
+
+const READ = (arg) => read_str(arg);
 const EVAL = (ast, env) => {
   if (!(ast instanceof MalList)) return eval_ast(ast, env);
   if (ast.isEmpty()) return ast;
+
+  switch (ast.value[0].value) {
+    case 'def!':
+      return handle_def(ast, env);
+    case 'let*':
+      return handle_let(ast, env);
+  }
 
   const [fn, ...args] = eval_ast(ast, env).value;
   return fn.apply(null, args);
