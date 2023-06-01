@@ -1,5 +1,6 @@
 const { pr_str } = require('./printer.js');
 const { read_str } = require('./reader.js');
+const core = require('./core.js');
 const {
   MalSymbol,
   MalList,
@@ -7,32 +8,18 @@ const {
   MalMap,
   MalVector,
   MalNil,
+  Iteratable,
 } = require('./types.js');
 const readline = require('readline');
 const { Env } = require('./env.js');
 
 const env = new Env();
-env.set(new MalSymbol('+'), (...args) =>
-  args.reduce((a, b) => new MalValue(a.value + b.value))
-);
-env.set(new MalSymbol('-'), (...args) =>
-  args.reduce((a, b) => new MalValue(a.value - b.value))
-);
-env.set(new MalSymbol('*'), (...args) =>
-  args.reduce((a, b) => new MalValue(a.value * b.value))
-);
-env.set(new MalSymbol('/'), (...args) =>
-  args.reduce((a, b) => new MalValue(a.value / b.value))
-);
-env.set(new MalSymbol('print'), (...args) => {
-  args.forEach((x) => process.stdout.write(pr_str(x) + ' '));
-  console.log();
-  return new MalNil();
-});
+core.forEach(({ symbol, fn }) => env.set(new MalSymbol(symbol), fn));
 
 const eval_ast = (ast, env) => {
   if (ast instanceof MalSymbol) {
-    return env.get(ast) || ast;
+    const value = env.get(ast);
+    return value !== undefined ? value : value;
   }
 
   if (ast instanceof MalList) {
@@ -55,8 +42,9 @@ const eval_ast = (ast, env) => {
 
 const handle_let = (ast, env) => {
   const letEnv = new Env(env);
-  for (let i = 0; i < ast.value[1].value.length; i += 2) {
-    letEnv.set(ast.value[1].value[i], EVAL(ast.value[1].value[i + 1], letEnv));
+  const bindings = ast.value[1];
+  for (let i = 0; i < bindings.value.length; i += 2) {
+    letEnv.set(bindings.value[i], EVAL(bindings.value[i + 1], letEnv));
   }
   return EVAL(ast.value[2], letEnv);
 };
@@ -77,8 +65,22 @@ const handle_if = (ast, env) => {
   if (!(evaluatedValue instanceof MalNil || evaluatedValue === false)) {
     return EVAL(trueBlock, env);
   }
-  if (falseBlock) return EVAL(falseBlock, env);
+  if (falseBlock !== undefined) return EVAL(falseBlock, env);
   return new MalNil();
+};
+
+// (def! not (fn* [x] (if x false true)))
+const handle_fn = (ast, env) => {
+  const [_, bindings, body] = ast.value;
+  const clojure = (...args) => {
+    const fnEnv = new Env(env);
+    bindings.value.forEach((variable, i) =>
+      fnEnv.set(variable, EVAL(args[i], fnEnv))
+    );
+    return EVAL(body, fnEnv);
+  };
+  clojure.toString = () => '#<function>';
+  return clojure;
 };
 
 const READ = (arg) => read_str(arg);
@@ -93,8 +95,10 @@ const EVAL = (ast, env) => {
       return handle_let(ast, env);
     case 'do':
       return handle_do(ast, env);
-    case 'if*':
+    case 'if':
       return handle_if(ast, env);
+    case 'fn*':
+      return handle_fn(ast, env);
   }
 
   const [fn, ...args] = eval_ast(ast, env).value;
