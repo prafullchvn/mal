@@ -15,6 +15,11 @@ const { Env } = require('./env.js');
 
 const env = new Env();
 core.forEach(({ symbol, fn }) => env.set(new MalSymbol(symbol), fn));
+env.set(new MalSymbol('not'), (arg) => {
+  if (arg.value === 0) return false;
+  if (EVAL(arg, env) instanceof MalNil) return true;
+  return !EVAL(arg, env);
+});
 
 const eval_ast = (ast, env) => {
   if (ast instanceof MalSymbol) {
@@ -73,10 +78,11 @@ const handle_if = (ast, env) => {
 const handle_fn = (ast, env) => {
   const [_, bindings, body] = ast.value;
   const clojure = (...args) => {
-    const fnEnv = new Env(env);
-    bindings.value.forEach((variable, i) =>
-      fnEnv.set(variable, EVAL(args[i], fnEnv))
-    );
+    const evaluatedArgs = args.map((arg) => EVAL(arg, env));
+    const fnEnv = new Env(env, bindings, evaluatedArgs);
+    // bindings.value.forEach((variable, i) =>
+    //   fnEnv.set(variable, EVAL(args[i], fnEnv))
+    // );
     return EVAL(body, fnEnv);
   };
   clojure.toString = () => '#<function>';
@@ -105,7 +111,7 @@ const EVAL = (ast, env) => {
   return fn.apply(null, args);
 };
 
-const PRINT = (malValue) => pr_str(malValue);
+const PRINT = (malValue) => pr_str(malValue, true);
 const rep = (str) => PRINT(EVAL(READ(str), env));
 
 const rl = readline.createInterface({

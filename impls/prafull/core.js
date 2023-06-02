@@ -38,26 +38,27 @@ module.exports = [
   {
     symbol: 'println',
     fn: (...args) => {
-      args.forEach((x) => process.stdout.write(pr_str(x) + ' '));
-      console.log();
+      console.log(...args.map((x) => pr_str(x)));
       return new MalNil();
     },
   },
   {
     symbol: 'prn',
     fn: (...args) => {
-      args.forEach((x) => process.stdout.write(pr_str(x) + ' '));
-      console.log();
+      console.log(...args.map((x) => pr_str(x, true)));
       return new MalNil();
     },
   },
   {
     symbol: 'pr-str',
     fn: (...args) => {
-      args.forEach((x) => process.stdout.write(pr_str(x) + ' '));
-      console.log();
-      return new MalNil();
+      return '"' + args.map((x) => pr_str(x, true, true)).join(' ') + '"';
     },
+  },
+  {
+    symbol: 'str',
+    fn: (...args) =>
+      '"' + args.map((arg) => pr_str(arg, false, false)).join('') + '"',
   },
   {
     symbol: '>',
@@ -82,18 +83,13 @@ module.exports = [
   {
     symbol: '=',
     fn: (...args) => {
-      const isTypeSame = pairReducer(
-        args,
-        (c, value1, value2) => c && typeof value1 === typeof value2
-      );
-
       const reducer = (c, arg1, arg2) => {
+        if (typeof value1 !== typeof value2) return false;
         if (isBoolean(arg1) || isBoolean(arg2)) return arg1 === arg2;
         return c && arg1.equals(arg2);
       };
-      const areEqual = isTypeSame && pairReducer(args, reducer);
 
-      return areEqual;
+      return pairReducer(args, reducer, true);
     },
   },
   {
@@ -115,6 +111,9 @@ module.exports = [
   },
   {
     symbol: 'count',
-    fn: (arg) => arg instanceof Iteratable && arg.value.length,
+    fn: (arg) => {
+      if (arg instanceof Iteratable) return new MalValue(arg.value.length);
+      else if (arg instanceof MalNil) return new MalValue(0);
+    },
   },
 ];

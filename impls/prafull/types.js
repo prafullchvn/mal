@@ -37,10 +37,12 @@ class Iteratable extends MalValue {
 
   equals(malList) {
     const areOfSameType = malList instanceof Iteratable;
+    const isString = malList instanceof MalString;
     const areEqalInLength =
       areOfSameType && malList.value.length === this.value.length;
 
     return (
+      !isString &&
       areEqalInLength &&
       this.value.every((element, i) => {
         const respElement = malList.value[i];
@@ -62,8 +64,8 @@ class MalList extends Iteratable {
     super(value);
   }
 
-  pr_str() {
-    return '(' + this.value.map((x) => x.pr_str()).join(' ') + ')';
+  pr_str(print_readably) {
+    return '(' + this.value.map((x) => x.pr_str(print_readably)).join(' ') + ')';
   }
 
   isEmpty() {
@@ -80,15 +82,12 @@ class MalVector extends Iteratable {
     super(value);
   }
 
-  pr_str() {
-    return '[' + this.value.map((x) => x.pr_str()).join(' ') + ']';
+  pr_str(print_readably) {
+    return '[' + this.value.map((x) => x.pr_str(print_readably)).join(' ') + ']';
   }
 
   equals(malVector) {
-    // if (malVector instanceof MalVector) {
     return super.equals(malVector);
-    // }
-    // return false;
   }
 }
 
@@ -112,10 +111,24 @@ class MalMap extends Iteratable {
   }
 
   equals(malMap) {
-    // if (malMap instanceof MalMap) {
     return super.equals(malMap);
-    // }
-    // return false;
+  }
+}
+
+class MalString extends Iteratable {
+  constructor(value) {
+    super(value);
+  }
+
+  pr_str(print_readably) {
+    if (print_readably) {
+      return '"' + this.value + '"';
+    }
+    return this.value;
+  }
+
+  equals(malString) {
+    return this.value === malString.value;
   }
 }
 
@@ -128,4 +141,5 @@ module.exports = {
   MalMap,
   Iteratable,
   isBoolean,
+  MalString,
 };

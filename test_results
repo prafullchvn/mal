@@ -1,0 +1,45 @@
+FAILED TEST (line 20): (count nil) -> ['',0]:
+FAILED TEST (line 24): (if (>= (count (list 1 2 3)) 3) 89 78) -> ['',89]:
+FAILED TEST (line 246): ( (fn* (& more) (count more)) 1 2 3) -> ['',3]:
+FAILED TEST (line 248): ( (fn* (& more) (list? more)) 1 2 3) -> ['',true]:
+FAILED TEST (line 250): ( (fn* (& more) (count more)) 1) -> ['',1]:
+FAILED TEST (line 252): ( (fn* (& more) (count more)) ) -> ['',0]:
+FAILED TEST (line 254): ( (fn* (& more) (list? more)) ) -> ['',true]:
+FAILED TEST (line 256): ( (fn* (a & more) (count more)) 1 2 3) -> ['',2]:
+FAILED TEST (line 258): ( (fn* (a & more) (count more)) 1) -> ['',0]:
+FAILED TEST (line 260): ( (fn* (a & more) (list? more)) 1) -> ['',true]:
+FAILED TEST (line 265): (not false) -> ['',true]:
+FAILED TEST (line 267): (not nil) -> ['',true]:
+FAILED TEST (line 269): (not true) -> ['',false]:
+FAILED TEST (line 271): (not "a") -> ['',false]:
+FAILED TEST (line 273): (not 0) -> ['',false]:
+FAILED TEST (line 281): "" -> ['',""]:
+FAILED TEST (line 284): "abc" -> ['',"abc"]:
+FAILED TEST (line 287): "abc  def" -> ['',"abc  def"]:
+FAILED TEST (line 290): "\"" -> ['',"\""]:
+FAILED TEST (line 293): "abc\ndef\nghi" -> ['',"abc\ndef\nghi"]:
+FAILED TEST (line 296): "abc\\def\\ghi" -> ['',"abc\\def\\ghi"]:
+FAILED TEST (line 299): "\\n" -> ['',"\\n"]:
+FAILED TEST (line 307): (pr-str "") -> ['',"\"\""]:
+FAILED TEST (line 310): (pr-str "abc") -> ['',"\"abc\""]:
+FAILED TEST (line 313): (pr-str "abc  def" "ghi jkl") -> ['',"\"abc  def\" \"ghi jkl\""]:
+FAILED TEST (line 316): (pr-str "\"") -> ['',"\"\\\"\""]:
+FAILED TEST (line 319): (pr-str (list 1 2 "abc" "\"") "def") -> ['',"(1 2 \"abc\" \"\\\"\") \"def\""]:
+FAILED TEST (line 322): (pr-str "abc\ndef\nghi") -> ['',"\"abc\\ndef\\nghi\""]:
+FAILED TEST (line 325): (pr-str "abc\\def\\ghi") -> ['',"\"abc\\\\def\\\\ghi\""]:
+FAILED TEST (line 369): (prn "") -> ['""\n',nil]:
+FAILED TEST (line 373): (prn "abc") -> ['"abc"\n',nil]:
+FAILED TEST (line 376): (prn "abc  def" "ghi jkl") -> ['"abc  def" "ghi jkl"',]:
+FAILED TEST (line 380): (prn "\"") -> ['"\\\\""\n',nil]:
+FAILED TEST (line 384): (prn "abc\ndef\nghi") -> ['"abc\\\\ndef\\\\nghi"\n',nil]:
+FAILED TEST (line 387): (prn "abc\\def\\ghi") -> ['"abc\\\\\\\\def\\\\\\\\ghi"',]:
+FAILED TEST (line 392): (prn (list 1 2 "abc" "\"") "def") -> ['\\(1 2 "abc" "\\\\""\\) "def"\n',nil]:
+FAILED TEST (line 413): (println "\"") -> ['"\n',nil]:
+FAILED TEST (line 423): (println "abc\\def\\ghi") -> ['abc\\\\def\\\\ghi\n',nil]:
+FAILED TEST (line 427): (println (list 1 2 "abc" "\"") "def") -> ['\\(1 2 abc "\\) def\n',nil]:
+FAILED TEST (line 432): (= :abc :abc) -> ['',true]:
+FAILED TEST (line 434): (= :abc :def) -> ['',false]:
+FAILED TEST (line 436): (= :abc ":abc") -> ['',false]:
+FAILED TEST (line 438): (= (list :abc) (list :abc)) -> ['',true]:
+FAILED TEST (line 446): (pr-str [1 2 "abc" "\""] "def") -> ['',"[1 2 \"abc\" \"\\\"\"] \"def\""]:
+FAILED TEST (line 474): (= [:abc] [:abc]) -> ['',true]:
