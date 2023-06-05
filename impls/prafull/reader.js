@@ -6,6 +6,7 @@ const {
   MalNil,
   MalMap,
   MalString,
+  MalKeyword,
 } = require('./types.js');
 
 class Reader {
@@ -75,6 +76,9 @@ const read_atom = (reader) => {
   }
   if (token.match(/^".*"$/)) {
     return new MalString(token.slice(1, -1));
+  }
+  if (token.match(/^:.+/)) {
+    return new MalKeyword(token);
   }
   if (token === 'true') {
     return true;

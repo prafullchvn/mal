@@ -17,6 +17,9 @@ const pairReducer = (list, fn, ctx = list[0]) => {
   return ctx;
 };
 
+const escapeChars = (str) =>
+  str.replaceAll('\\n', '\n').replaceAll('\\"', '"').replaceAll('\\\\', '\\');
+
 module.exports = [
   {
     symbol: '+',
@@ -38,7 +41,7 @@ module.exports = [
   {
     symbol: 'println',
     fn: (...args) => {
-      console.log(...args.map((x) => pr_str(x)));
+      console.log(...args.map((x) => escapeChars(pr_str(x))));
       return new MalNil();
     },
   },
@@ -84,7 +87,6 @@ module.exports = [
     symbol: '=',
     fn: (...args) => {
       const reducer = (c, arg1, arg2) => {
-        if (typeof value1 !== typeof value2) return false;
         if (isBoolean(arg1) || isBoolean(arg2)) return arg1 === arg2;
         return c && arg1.equals(arg2);
       };

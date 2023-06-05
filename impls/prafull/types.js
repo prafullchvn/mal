@@ -65,7 +65,9 @@ class MalList extends Iteratable {
   }
 
   pr_str(print_readably) {
-    return '(' + this.value.map((x) => x.pr_str(print_readably)).join(' ') + ')';
+    return (
+      '(' + this.value.map((x) => x.pr_str(print_readably)).join(' ') + ')'
+    );
   }
 
   isEmpty() {
@@ -83,7 +85,9 @@ class MalVector extends Iteratable {
   }
 
   pr_str(print_readably) {
-    return '[' + this.value.map((x) => x.pr_str(print_readably)).join(' ') + ']';
+    return (
+      '[' + this.value.map((x) => x.pr_str(print_readably)).join(' ') + ']'
+    );
   }
 
   equals(malVector) {
@@ -128,7 +132,35 @@ class MalString extends Iteratable {
   }
 
   equals(malString) {
+    if (!(malString instanceof MalString)) return false;
     return this.value === malString.value;
+  }
+}
+
+class MalFunction extends MalValue {
+  constructor(ast, bindings, env) {
+    super(ast);
+    this.bindings = bindings;
+    this.env = env;
+  }
+
+  pr_str() {
+    return '#<function>';
+  }
+}
+
+class MalKeyword extends MalValue {
+  constructor(value) {
+    super(value);
+  }
+
+  equals(malKeyword) {
+    if (!(malKeyword instanceof MalKeyword)) return false;
+    return this.value === malKeyword.value;
+  }
+
+  pr_str() {
+    return this.value;
   }
 }
 
@@ -142,4 +174,6 @@ module.exports = {
   Iteratable,
   isBoolean,
   MalString,
+  MalFunction,
+  MalKeyword,
 };
