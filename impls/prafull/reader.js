@@ -7,8 +7,8 @@ const {
   MalMap,
   MalString,
   MalKeyword,
+  createMalString,
 } = require('./types.js');
-
 class Reader {
   constructor(tokens) {
     this.tokens = tokens;
@@ -33,7 +33,7 @@ class Reader {
 const tokenize = (str) => {
   const re =
     /[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)/g;
-  return [...str.matchAll(re)].map((x) => x[1]).slice(0, -1);
+  return [...str.toString().matchAll(re)].map((x) => x[1]).slice(0, -1);
 };
 
 const read_seq = (reader, closingSymbol) => {
@@ -72,10 +72,15 @@ const read_map = (reader) => {
 const read_atom = (reader) => {
   const token = reader.next();
   if (token.match(/^-?\d+$/)) {
-    return new MalValue(parseInt(token));
+    // return new MalValue(parseInt(token));
+    return parseInt(token);
   }
-  if (token.match(/^".*"$/)) {
-    return new MalString(token.slice(1, -1));
+  // if (token.startsWith(';')) {
+  //   reader.next();
+  //   return new MalNil();
+  // }
+  if (token.startsWith('"')) {
+    return createMalString(token);
   }
   if (token.match(/^:.+/)) {
     return new MalKeyword(token);
@@ -92,6 +97,14 @@ const read_atom = (reader) => {
   return new MalSymbol(token);
 };
 
+const prependSymbol = (reader, symbol) => {
+  reader.next();
+  const malSymbol = new MalSymbol(symbol);
+  const ast = read_form(reader);
+
+  return new MalList([malSymbol, ast]);
+};
+
 const read_form = (reader) => {
   const token = reader.peek();
   switch (token) {
@@ -101,7 +114,21 @@ const read_form = (reader) => {
       return read_vector(reader);
     case '{':
       return read_map(reader);
+    case '@':
+      return prependSymbol(reader, 'deref');
+    case "'":
+      return prependSymbol(reader, 'quote');
+    case '`':
+      return prependSymbol(reader, 'quasiquote');
+    case '~':
+      return prependSymbol(reader, 'unquote');
+    case '~@':
+      return prependSymbol(reader, 'splice-unquote');
     default:
+      if (token.startsWith(';')) {
+        reader.next();
+        return new MalNil();
+      }
       return read_atom(reader);
   }
 };

@@ -1,4 +1,6 @@
+const { readFileSync } = require('fs');
 const { pr_str } = require('./printer.js');
+const { read_str } = require('./reader.js');
 const {
   MalSymbol,
   MalList,
@@ -8,35 +10,30 @@ const {
   MalNil,
   Iteratable,
   isBoolean,
+  MalString,
+  pairReducer,
+  escapeChars,
+  makeReadable,
+  createMalString,
+  MalAtom,
 } = require('./types.js');
-
-const pairReducer = (list, fn, ctx = list[0]) => {
-  for (let i = 0; i < list.length - 1; i++) {
-    ctx = fn(ctx, list[i], list[i + 1]);
-  }
-  return ctx;
-};
-
-const escapeChars = (str) =>
-  str.replaceAll('\\n', '\n').replaceAll('\\"', '"').replaceAll('\\\\', '\\');
 
 module.exports = [
   {
     symbol: '+',
-    fn: (...args) => args.reduce((a, b) => new MalValue(a.value + b.value)),
+    fn: (...args) => args.reduce((a, b) => a + b),
   },
   {
     symbol: '-',
-    fn: (...args) => args.reduce((a, b) => new MalValue(a.value - b.value)),
+    fn: (...args) => args.reduce((a, b) => a - b),
   },
   {
     symbol: '*',
-    fn: (...args) => args.reduce((a, b) => new MalValue(a.value * b.value)),
+    fn: (...args) => args.reduce((a, b) => a * b),
   },
   {
     symbol: '/',
-    fn: (...args) =>
-      args.reduce((a, b) => new MalValue(a.value / b.value), new MalValue(1)),
+    fn: (...args) => args.reduce((a, b) => a / b),
   },
   {
     symbol: 'println',
@@ -54,41 +51,42 @@ module.exports = [
   },
   {
     symbol: 'pr-str',
-    fn: (...args) => {
-      return '"' + args.map((x) => pr_str(x, true, true)).join(' ') + '"';
-    },
+    fn: (...args) =>
+      '"' + args.map((x) => pr_str(x, true, true)).join(' ') + '"',
   },
   {
     symbol: 'str',
     fn: (...args) =>
-      '"' + args.map((arg) => pr_str(arg, false, false)).join('') + '"',
+      new MalString(args.map((arg) => pr_str(arg, false)).join('')),
   },
   {
     symbol: '>',
     fn: (...args) =>
-      pairReducer(args, (c, num1, num2) => c && num1.value > num2.value, true),
+      pairReducer(args, (c, num1, num2) => c && num1 > num2, true),
   },
   {
     symbol: '<',
     fn: (...args) =>
-      pairReducer(args, (c, num1, num2) => c && num1.value < num2.value, true),
+      pairReducer(args, (c, num1, num2) => c && num1 < num2, true),
   },
   {
     symbol: '>=',
     fn: (...args) =>
-      pairReducer(args, (c, num1, num2) => c && num1.value >= num2.value, true),
+      pairReducer(args, (c, num1, num2) => c && num1 >= num2, true),
   },
   {
     symbol: '<=',
     fn: (...args) =>
-      pairReducer(args, (c, num1, num2) => c && num1.value <= num2.value, true),
+      pairReducer(args, (c, num1, num2) => c && num1 <= num2, true),
   },
   {
     symbol: '=',
     fn: (...args) => {
       const reducer = (c, arg1, arg2) => {
-        if (isBoolean(arg1) || isBoolean(arg2)) return arg1 === arg2;
-        return c && arg1.equals(arg2);
+        if (arg1 instanceof MalValue || arg2 instanceof MalValue) {
+          return c && arg1.equals(arg2);
+        }
+        return arg1 === arg2;
       };
 
       return pairReducer(args, reducer, true);
@@ -117,5 +115,58 @@ module.exports = [
       if (arg instanceof Iteratable) return new MalValue(arg.value.length);
       else if (arg instanceof MalNil) return new MalValue(0);
     },
+  },
+  {
+    symbol: 'read-string',
+    fn: (str) => read_str(str.value),
+  },
+  {
+    symbol: 'slurp',
+    fn: (fileName) =>
+      createMalString('"' + readFileSync(fileName.value, 'utf8') + '"'),
+  },
+  {
+    symbol: 'atom',
+    fn: (malValue) => new MalAtom(malValue),
+  },
+  {
+    symbol: 'atom?',
+    fn: (value) => value instanceof MalAtom,
+  },
+  {
+    symbol: 'deref',
+    fn: (malAtom) => malAtom.deref(),
+  },
+  {
+    symbol: 'reset!',
+    fn: (malAtom, malValue) => malAtom.reset(malValue),
+  },
+  // {
+  //   symbol: 'inc1',
+  //   fn: (malValue) => new MalValue(malValue.value + 1),
+  // },
+  // {
+  //   symbol: 'inc2',
+  //   fn: (malValue) => new MalValue(malValue.value + 2),
+  // },
+  // {
+  //   symbol: 'inc3',
+  //   fn: (malValue) => new MalValue(malValue.value + 3),
+  // },
+  {
+    symbol: 'cons',
+    fn: (element, list) => new MalList([element, ...list.value]),
+  },
+  {
+    symbol: 'concat',
+    fn: (...lists) => new MalList(lists.flatMap((x) => x.value)),
+  },
+  {
+    symbol: 'vec',
+    fn: (list) => new MalVector(list.value),
+  },
+  {
+    symbol: 'swap!',
+    fn: (atomicValue, fnRef, ...args) => atomicValue.swap(fnRef, args),
   },
 ];

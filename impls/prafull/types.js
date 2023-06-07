@@ -1,3 +1,31 @@
+const createMalString = (str) => {
+  const formattedString = str.slice(1, -1).replaceAll(/\\(.)/g, (_, char) => {
+    switch (char) {
+      case 'n':
+        return '\n';
+      case '"':
+        return '"';
+      default:
+        return char;
+    }
+  });
+
+  return new MalString(formattedString);
+};
+
+const makeReadable = (str) =>
+  str.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
+
+const pairReducer = (list, fn, ctx = list[0]) => {
+  for (let i = 0; i < list.length - 1; i++) {
+    ctx = fn(ctx, list[i], list[i + 1]);
+  }
+  return ctx;
+};
+
+const escapeChars = (str) =>
+  str.replaceAll('\\n', '\n').replaceAll('\\"', '"').replaceAll('\\\\', '\\');
+
 class MalValue {
   constructor(value) {
     this.value = value;
@@ -11,6 +39,13 @@ class MalValue {
     return this.value === malValue.value;
   }
 }
+
+const pr_str = (malValue, print_readably) => {
+  if (malValue instanceof MalValue) {
+    return malValue.pr_str(print_readably);
+  }
+  return malValue.toString();
+};
 
 class MalSymbol extends MalValue {
   constructor(value) {
@@ -66,7 +101,7 @@ class MalList extends Iteratable {
 
   pr_str(print_readably) {
     return (
-      '(' + this.value.map((x) => x.pr_str(print_readably)).join(' ') + ')'
+      '(' + this.value.map((x) => pr_str(x, print_readably)).join(' ') + ')'
     );
   }
 
@@ -77,6 +112,10 @@ class MalList extends Iteratable {
   equals(malList) {
     return super.equals(malList);
   }
+
+  beginsWith(symbol) {
+    return this.value.length > 0 && this.value[0].value === symbol;
+  }
 }
 
 class MalVector extends Iteratable {
@@ -86,7 +125,7 @@ class MalVector extends Iteratable {
 
   pr_str(print_readably) {
     return (
-      '[' + this.value.map((x) => x.pr_str(print_readably)).join(' ') + ']'
+      '[' + this.value.map((x) => pr_str(x, print_readably)).join(' ') + ']'
     );
   }
 
@@ -110,8 +149,10 @@ class MalMap extends Iteratable {
     super(value);
   }
 
-  pr_str() {
-    return '{' + this.value.map((x, i) => x.pr_str()).join(' ') + '}';
+  pr_str(print_readably) {
+    return (
+      '{' + this.value.map((x, i) => pr_str(x, print_readably)).join(' ') + '}'
+    );
   }
 
   equals(malMap) {
@@ -126,7 +167,7 @@ class MalString extends Iteratable {
 
   pr_str(print_readably) {
     if (print_readably) {
-      return '"' + this.value + '"';
+      return '"' + makeReadable(this.value) + '"';
     }
     return this.value;
   }
@@ -138,14 +179,20 @@ class MalString extends Iteratable {
 }
 
 class MalFunction extends MalValue {
-  constructor(ast, bindings, env) {
+  constructor(ast, bindings, env, ref, isMacro = false) {
     super(ast);
     this.bindings = bindings;
     this.env = env;
+    this.ref = ref;
+    this.isMacro = isMacro;
   }
 
   pr_str() {
     return '#<function>';
+  }
+
+  apply(ctx, args) {
+    return this.ref.apply(ctx, args);
   }
 }
 
@@ -164,6 +211,34 @@ class MalKeyword extends MalValue {
   }
 }
 
+class MalAtom extends MalValue {
+  constructor(value) {
+    super(value);
+  }
+
+  equals(malAtom) {
+    return malAtom.value === this.value;
+  }
+
+  pr_str() {
+    return '(atom ' + this.value + ')';
+  }
+
+  deref() {
+    return this.value;
+  }
+
+  reset(value) {
+    this.value = value;
+    return value;
+  }
+
+  swap(fnRef, args) {
+    this.value = fnRef.apply(null, [this.value, ...args]);
+    return this.value;
+  }
+}
+
 module.exports = {
   MalSymbol,
   MalValue,
@@ -176,4 +251,10 @@ module.exports = {
   MalString,
   MalFunction,
   MalKeyword,
+  makeReadable,
+  pairReducer,
+  escapeChars,
+  createMalString,
+  MalAtom,
+  pr_str,
 };

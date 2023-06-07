@@ -15,7 +15,6 @@ class Env {
     bindsList.every((bindVar, i) => {
       if (bindVar.value === '&') {
         this.set(bindsList[i + 1], new MalList(args.slice(i)));
-        console.log(this.get(bindsList[i + 1]), 'printing result of and');
         return false;
       }
       this.set(bindVar, args[i]);
