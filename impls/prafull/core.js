@@ -112,8 +112,8 @@ module.exports = [
   {
     symbol: 'count',
     fn: (arg) => {
-      if (arg instanceof Iteratable) return new MalValue(arg.value.length);
-      else if (arg instanceof MalNil) return new MalValue(0);
+      if (arg instanceof Iteratable) return arg.value.length;
+      else if (arg instanceof MalNil) return 0;
     },
   },
   {
@@ -168,5 +168,17 @@ module.exports = [
   {
     symbol: 'swap!',
     fn: (atomicValue, fnRef, ...args) => atomicValue.swap(fnRef, args),
+  },
+  {
+    symbol: 'nth',
+    fn: (list, n) => list.nth(n),
+  },
+  {
+    symbol: 'first',
+    fn: (list) => (list instanceof MalNil ? new MalNil() : list.first()),
+  },
+  {
+    symbol: 'rest',
+    fn: (list) => (list instanceof MalNil ? new MalList([]) : list.rest()),
   },
 ];

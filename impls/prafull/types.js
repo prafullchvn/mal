@@ -92,6 +92,21 @@ class Iteratable extends MalValue {
   isEmpty() {
     return this.value.length === 0;
   }
+
+  nth(n) {
+    if (n >= this.value.length) {
+      throw 'range out of bound';
+    }
+    return this.value[n];
+  }
+
+  first() {
+    return this.isEmpty() ? new MalNil() : this.value[0];
+  }
+
+  rest() {
+    return new MalList(this.value.slice(1));
+  }
 }
 
 class MalList extends Iteratable {
